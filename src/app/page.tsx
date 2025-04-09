@@ -18,10 +18,16 @@ export default function Home() {
     instructions: string;
   } | null>(null);
   const [recipeSummary, setRecipeSummary] = useState<SummarizeRecipeOutput | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleGenerateRecipes = async () => {
-    const recipeSuggestions = await generateRecipeSuggestions({ingredients});
-    setRecipes(recipeSuggestions);
+    setIsLoading(true);
+    try {
+      const recipeSuggestions = await generateRecipeSuggestions({ingredients});
+      setRecipes(recipeSuggestions);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleRecipeClick = async (recipe: {title: string; ingredients: string[]; instructions: string}) => {
@@ -59,8 +65,8 @@ export default function Home() {
               onChange={(e) => setIngredients(e.target.value)}
               className="mb-4"
             />
-            <Button onClick={handleGenerateRecipes} className="w-full">
-              Generate
+            <Button onClick={handleGenerateRecipes} className="w-full" disabled={isLoading}>
+              {isLoading ? 'Generating...' : 'Generate'}
             </Button>
 
             {recipes && recipes.recipes.length > 0 && (
@@ -89,11 +95,6 @@ export default function Home() {
             {selectedRecipe ? (
               <div>
                 <h3 className="mb-2 font-semibold">{selectedRecipe.title}</h3>
-                <p className="mb-2">
-                  <span className="font-semibold">Ingredients:</span>
-                  <br />
-                  {selectedRecipe.ingredients}
-                </p>
                 <p className="mb-4">
                   <span className="font-semibold">Instructions:</span>
                   <br />
