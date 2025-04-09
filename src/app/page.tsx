@@ -2,16 +2,16 @@
 
 import {Card, CardContent, CardDescription, CardHeader, CardTitle} from '@/components/ui/card';
 import {Button} from '@/components/ui/button';
-import {useState, useRef, useEffect} from 'react';
+import {useState} from 'react';
 import {generateRecipeSuggestions} from '@/ai/flows/generate-recipe';
 import {GenerateRecipeSuggestionsOutput} from '@/ai/flows/generate-recipe';
 import {summarizeRecipe} from '@/ai/flows/summarize-recipe';
 import {SummarizeRecipeOutput} from '@/ai/flows/summarize-recipe';
 import {Textarea} from '@/components/ui/textarea';
 import {Icons} from '@/components/icons';
-import {Alert, AlertDescription, AlertTitle} from '@/components/ui/alert';
 import {useToast} from '@/hooks/use-toast';
 import {createRecipeFromPhoto} from '@/ai/flows/create-recipe-from-photo';
+import {Input} from '@/components/ui/input';
 
 export default function Home() {
   const [ingredients, setIngredients] = useState('');
@@ -23,9 +23,11 @@ export default function Home() {
   } | null>(null);
   const [recipeSummary, setRecipeSummary] = useState<SummarizeRecipeOutput | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-  const videoRef = useRef<HTMLVideoElement>(null);
-  const [hasCameraPermission, setHasCameraPermission] = useState(false);
   const {toast} = useToast();
+  const [recipeSuggestionsFromPhoto, setRecipeSuggestionsFromPhoto] = useState<
+    {title: string; ingredients: string[]; instructions: string}[] | null
+  >(null);
+  const [uploadedImage, setUploadedImage] = useState<string | null>(null);
 
   const handleGenerateRecipes = async () => {
     setIsLoading(true);
@@ -57,59 +59,42 @@ export default function Home() {
     }
   };
 
-  //Recipe from Photo
-  const [recipeSuggestionsFromPhoto, setRecipeSuggestionsFromPhoto] = useState<
-    {title: string; ingredients: string[]; instructions: string}[] | null
-  >(null);
-
-  const handleCreateRecipeFromPhoto = async () => {
+  const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     setIsLoading(true);
     try {
-      if (videoRef.current) {
-        const canvas = document.createElement('canvas');
-        canvas.width = videoRef.current.videoWidth;
-        canvas.height = videoRef.current.videoHeight;
-        const ctx = canvas.getContext('2d');
-        ctx?.drawImage(videoRef.current, 0, 0, canvas.width, canvas.height);
-        const photo = canvas.toDataURL('image/jpeg');
-
-        const recipeSuggestions = await createRecipeFromPhoto({photo});
-        setRecipeSuggestionsFromPhoto(recipeSuggestions.recipes);
+      const file = event.target.files?.[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onloadend = async () => {
+          const photo = reader.result as string;
+          setUploadedImage(photo);
+          try {
+            const recipeSuggestions = await createRecipeFromPhoto({photo});
+            setRecipeSuggestionsFromPhoto(recipeSuggestions.recipes);
+          } catch (error: any) {
+            console.error('Error creating recipe from photo:', error);
+            toast({
+              variant: 'destructive',
+              title: 'Error',
+              description: error.message || 'Failed to create recipe from photo.',
+            });
+          } finally {
+            setIsLoading(false);
+          }
+        };
+        reader.readAsDataURL(file);
       }
     } catch (error: any) {
-      console.error('Error creating recipe from photo:', error);
+      console.error('Error uploading image:', error);
       toast({
         variant: 'destructive',
         title: 'Error',
-        description: error.message || 'Failed to create recipe from photo.',
+        description: error.message || 'Failed to upload image.',
       });
     } finally {
       setIsLoading(false);
     }
   };
-
-  useEffect(() => {
-    const getCameraPermission = async () => {
-      try {
-        const stream = await navigator.mediaDevices.getUserMedia({video: true});
-        setHasCameraPermission(true);
-
-        if (videoRef.current) {
-          videoRef.current.srcObject = stream;
-        }
-      } catch (error) {
-        console.error('Error accessing camera:', error);
-        setHasCameraPermission(false);
-        toast({
-          variant: 'destructive',
-          title: 'Camera Access Denied',
-          description: 'Please enable camera permissions in your browser settings to use this app.',
-        });
-      }
-    };
-
-    getCameraPermission();
-  }, []);
 
   return (
     <div className="flex flex-col min-h-screen p-6 bg-background">
@@ -165,27 +150,18 @@ export default function Home() {
           <CardHeader>
             <CardTitle className="text-primary font-semibold">Create Recipes from Photos</CardTitle>
             <CardDescription className="text-muted-foreground">
-              Take a photo of your ingredients to get recipe suggestions.
+              Upload a photo of your ingredients to get recipe suggestions.
             </CardDescription>
           </CardHeader>
           <CardContent className="flex flex-col items-center justify-center">
-            {hasCameraPermission ? (
-              <>
-                <video ref={videoRef} className="w-full aspect-video rounded-md" autoPlay muted />
-                <Button
-                  onClick={handleCreateRecipeFromPhoto}
-                  className="mt-4 bg-primary text-primary-foreground rounded-md shadow-md hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-opacity-50 transition-colors duration-300 micro-interaction"
-                  disabled={isLoading}
-                >
-                  {isLoading ? 'Generating...' : <Icons.camera className="mr-2" />}
-                  {isLoading ? 'Generating...' : 'Generate Recipes from Photo'}
-                </Button>
-              </>
-            ) : (
-              <Alert variant="destructive">
-                <AlertTitle>Camera Access Required</AlertTitle>
-                <AlertDescription>Please allow camera access to use this feature.</AlertDescription>
-              </Alert>
+            <Input
+              type="file"
+              accept="image/*"
+              onChange={handleImageUpload}
+              className="mb-4"
+            />
+            {uploadedImage && (
+              <img src={uploadedImage} alt="Uploaded Ingredients" className="w-full aspect-video rounded-md" />
             )}
 
             {recipeSuggestionsFromPhoto && recipeSuggestionsFromPhoto.length > 0 && (
