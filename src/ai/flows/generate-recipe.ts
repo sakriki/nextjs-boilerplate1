@@ -1,4 +1,3 @@
-// Use server directive needed for Genkit flows.
 'use server';
 /**
  * @fileOverview Recipe suggestion AI agent.
@@ -12,7 +11,7 @@ import {ai} from '@/ai/ai-instance';
 import {z} from 'genkit';
 
 const GenerateRecipeSuggestionsInputSchema = z.object({
-  ingredients: z.string().describe('A comma separated list of ingredients available in the fridge.'),
+  ingredients: z.string().describe('A comma separated list of ingredients available in the fridge. Please be specific with quantities and forms (e.g., "200g cooked chicken breast, 1 diced onion").'),
 });
 export type GenerateRecipeSuggestionsInput = z.infer<typeof GenerateRecipeSuggestionsInputSchema>;
 
@@ -35,7 +34,7 @@ const prompt = ai.definePrompt({
   name: 'generateRecipeSuggestionsPrompt',
   input: {
     schema: z.object({
-      ingredients: z.string().describe('A comma separated list of ingredients available in the fridge.'),
+      ingredients: z.string().describe('A comma separated list of ingredients available in the fridge. Please be specific with quantities and forms (e.g., "200g cooked chicken breast, 1 diced onion").'),
     }),
   },
   output: {
@@ -49,9 +48,15 @@ const prompt = ai.definePrompt({
       ).describe('A list of recipe suggestions based on the given ingredients.'),
     }),
   },
-  prompt: `You are a chef specializing in creating recipes based on a given list of ingredients.
+  prompt: `You are a world-class chef known for your innovative and detailed recipes.
 
-  Based on the ingredients provided, suggest a few recipe ideas. Each recipe should include a title, a list of ingredients, and step-by-step instructions.
+  Based on the ingredients provided, suggest a few recipe ideas. Each recipe should include:
+  - A creative and descriptive title
+  - A comprehensive list of ingredients with precise quantities
+  - Step-by-step instructions that include:
+    - Preparation steps
+    - Cooking times and temperatures
+    - Specific cooking techniques
 
   Ingredients: {{{ingredients}}}
   Recipes:
@@ -70,3 +75,5 @@ async input => {
   const {output} = await prompt(input);
   return output!;
 });
+
+    
