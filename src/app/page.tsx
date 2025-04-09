@@ -1,7 +1,6 @@
 'use client';
 
 import {Card, CardContent, CardDescription, CardHeader, CardTitle} from '@/components/ui/card';
-import {Input} from '@/components/ui/input';
 import {Button} from '@/components/ui/button';
 import {useState} from 'react';
 import {generateRecipeSuggestions} from '@/ai/flows/generate-recipe';
@@ -9,6 +8,7 @@ import {GenerateRecipeSuggestionsOutput} from '@/ai/flows/generate-recipe';
 import {summarizeRecipe} from '@/ai/flows/summarize-recipe';
 import {SummarizeRecipeOutput} from '@/ai/flows/summarize-recipe';
 import {Textarea} from '@/components/ui/textarea';
+import {Icons} from '@/components/icons';
 
 export default function Home() {
   const [ingredients, setIngredients] = useState('');
@@ -32,14 +32,14 @@ export default function Home() {
   };
 
   const handleRecipeClick = async (recipe: {title: string; ingredients: string[]; instructions: string}) => {
-    setSelectedRecipe({
-      title: recipe.title,
-      ingredients: recipe.ingredients.join('\n'),
-      instructions: recipe.instructions,
-    });
-
     setIsLoading(true);
     try {
+      setSelectedRecipe({
+        title: recipe.title,
+        ingredients: recipe.ingredients.join('\n'),
+        instructions: recipe.instructions,
+      });
+
       const summary = await summarizeRecipe({
         recipeTitle: recipe.title,
         ingredients: recipe.ingredients.join('\n'),
@@ -52,27 +52,29 @@ export default function Home() {
   };
 
   return (
-    <div className="flex flex-col min-h-screen p-6 bg-gradient-to-br from-green-50 to-green-100">
+    <div className="flex flex-col min-h-screen p-6 bg-background">
       <header className="mb-8 flex items-center justify-center">
-        <h1 className="text-3xl font-extrabold tracking-tight text-green-800">FridgeChef</h1>
+        <h1 className="text-3xl font-extrabold tracking-tight text-primary food-animation">FridgeChef</h1>
       </header>
 
       <main className="grid gap-6 md:grid-cols-1 lg:grid-cols-2">
-        <Card className="bg-green-50 shadow-xl rounded-2xl border-0">
+        <Card className="shadow-xl rounded-2xl border-0 bg-card">
           <CardHeader>
-            <CardTitle className="text-green-900 font-semibold">Recipe Generator</CardTitle>
-            <CardDescription className="text-green-700">Enter your ingredients to get recipe suggestions.</CardDescription>
+            <CardTitle className="text-primary font-semibold">Recipe Generator</CardTitle>
+            <CardDescription className="text-muted-foreground">
+              Enter your ingredients to get recipe suggestions.
+            </CardDescription>
           </CardHeader>
           <CardContent>
             <Textarea
               placeholder="Enter ingredients, comma-separated"
               value={ingredients}
               onChange={(e) => setIngredients(e.target.value)}
-              className="mb-4 rounded-md shadow-sm border-green-300 focus:border-green-500 focus:ring-green-500"
+              className="mb-4 rounded-md shadow-sm border-input bg-input text-foreground focus:border-primary focus:ring-primary"
             />
             <Button
               onClick={handleGenerateRecipes}
-              className="w-full bg-green-600 text-white rounded-md shadow-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-opacity-50 transition-colors duration-300 disabled:bg-green-300 disabled:cursor-not-allowed"
+              className="w-full bg-primary text-primary-foreground rounded-md shadow-md hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-opacity-50 transition-colors duration-300 micro-interaction"
               disabled={isLoading}
             >
               {isLoading ? 'Generating...' : 'Generate Recipes'}
@@ -80,14 +82,14 @@ export default function Home() {
 
             {recipes && recipes.recipes.length > 0 && (
               <div className="mt-4">
-                <h3 className="mb-2 font-semibold text-green-800">Suggested Recipes:</h3>
+                <h3 className="mb-2 font-semibold text-primary">Suggested Recipes:</h3>
                 <ul className="list-none pl-0">
                   {recipes.recipes.map((recipe, index) => (
                     <li key={index} className="mb-2">
                       <Button
                         variant="outline"
                         onClick={() => handleRecipeClick(recipe)}
-                        className="w-full rounded-md shadow-sm border-green-300 text-green-700 hover:bg-green-50 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-opacity-50 transition-colors duration-200"
+                        className="w-full rounded-md shadow-sm border-secondary text-secondary-foreground hover:bg-secondary/10 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-opacity-50 transition-colors duration-200 micro-interaction"
                       >
                         {recipe.title}
                       </Button>
@@ -99,29 +101,29 @@ export default function Home() {
           </CardContent>
         </Card>
 
-        <Card className="bg-green-50 shadow-xl rounded-2xl border-0">
+        <Card className="shadow-xl rounded-2xl border-0 bg-card">
           <CardHeader>
-            <CardTitle className="text-green-900 font-semibold">Recipe Summary</CardTitle>
-            <CardDescription className="text-green-700">View the selected recipe and its summary.</CardDescription>
+            <CardTitle className="text-primary font-semibold">Recipe Summary</CardTitle>
+            <CardDescription className="text-muted-foreground">View the selected recipe and its summary.</CardDescription>
           </CardHeader>
           <CardContent>
             {selectedRecipe ? (
               <div>
-                <h3 className="mb-2 font-semibold text-green-800">{selectedRecipe.title}</h3>
-                <p className="mb-4 text-green-700">
-                  <span className="font-semibold text-green-800">Instructions:</span>
+                <h3 className="mb-2 font-semibold text-primary">{selectedRecipe.title}</h3>
+                <p className="mb-4 text-muted-foreground">
+                  <span className="font-semibold text-primary">Instructions:</span>
                   <br />
                   {selectedRecipe.instructions}
                 </p>
                 {recipeSummary && (
                   <div>
-                    <h4 className="mb-2 font-semibold text-green-800">Summary:</h4>
-                    <p className="text-green-700">{recipeSummary.summary}</p>
+                    <h4 className="mb-2 font-semibold text-primary">Summary:</h4>
+                    <p className="text-muted-foreground">{recipeSummary.summary}</p>
                   </div>
                 )}
               </div>
             ) : (
-              <p className="text-green-700">No recipe selected.</p>
+              <p className="text-muted-foreground">No recipe selected.</p>
             )}
           </CardContent>
         </Card>
