@@ -120,7 +120,11 @@ export default function Home() {
                 {recipeSummary && (
                   <div>
                     <h4 className="mb-2 font-semibold text-primary">Summary:</h4>
-                    <p className="text-muted-foreground">{recipeSummary.summary}</p>
+                    <ol className="list-decimal pl-4 text-muted-foreground">
+                      {recipeSummary.summary.split('\n').map((item, index) => (
+                        <li key={index}>{item}</li>
+                      ))}
+                    </ol>
                   </div>
                 )}
               </div>
@@ -133,4 +137,5 @@ export default function Home() {
     </div>
   );
 }
+
 
